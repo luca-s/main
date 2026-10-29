@@ -14,6 +14,7 @@
 
 #define SEISCOMP_COMPONENT Autopick
 #include <seiscomp/logging/log.h>
+#include <seiscomp/core/datamessage.h>
 
 #include <seiscomp/client/inventory.h>
 
@@ -1802,11 +1803,25 @@ void App::sendPick(Seiscomp::DataModel::Pick *pick, DataModel::Amplitude *amp,
 	if ( amp )
 		logObject(_logAmps, now);
 
-	if ( connection() && !_config.test ) {
+	if ( connection() && !_config.test && _config.useDataMessages ) {
+		// The comments are serialized as children of the pick
+		Core::DataMessagePtr m = new Core::DataMessage;
+		m->attach(pick);
+		connection()->send(m.get());
+
+		// Send amplitude
+		if ( amp ) {
+			m = new Core::DataMessage;
+			m->attach(amp);
+			connection()->send(_config.amplitudeGroup, m.get());
+		}
+	}
+	else if ( connection() && !_config.test ) {
 		DataModel::NotifierPtr n = new DataModel::Notifier("EventParameters", DataModel::OP_ADD, pick);
 		DataModel::NotifierMessagePtr m = new DataModel::NotifierMessage;
 		m->attach(n.get());
 
+		// Notifiers do not serialize child objects
 		for ( size_t i = 0; i < pick->commentCount(); ++i ) {
 			n = new DataModel::Notifier(pick->publicID(), DataModel::OP_ADD, pick->comment(i));
 			m->attach(n.get());
@@ -1944,9 +1959,19 @@ void App::emitAmplitude(const AmplitudeProcessor *ampProc,
 	logObject(_logAmps, ci.creationTime());
 
 	if ( connection() && !_config.test ) {
-		DataModel::NotifierPtr n = new DataModel::Notifier("EventParameters", update?DataModel::OP_UPDATE:DataModel::OP_ADD, amp.get());
-		DataModel::NotifierMessagePtr m = new DataModel::NotifierMessage;
-		m->attach(n.get());
+		Core::MessagePtr m;
+		if ( _config.useDataMessages ) {
+			// No operation in data messages: updates are sent as new objects
+			Core::DataMessagePtr dm = new Core::DataMessage;
+			dm->attach(amp.get());
+			m = dm;
+		}
+		else {
+			DataModel::NotifierPtr n = new DataModel::Notifier("EventParameters", update?DataModel::OP_UPDATE:DataModel::OP_ADD, amp.get());
+			DataModel::NotifierMessagePtr nm = new DataModel::NotifierMessage;
+			nm->attach(n.get());
+			m = nm;
+		}
 		if ( !connection()->send(_config.amplitudeGroup, m.get()) && !update ) {
 			ampProc->setUserData(nullptr);
 		}

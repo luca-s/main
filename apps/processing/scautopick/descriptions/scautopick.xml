@@ -250,6 +250,19 @@
 					Message group for sending amplitudes to.
 					</description>
 				</parameter>
+				<parameter name="useDataMessages" type="boolean" default="false">
+					<description>
+					Send picks and amplitudes as data messages instead of
+					notifier messages. Pick comments are sent within the pick.
+
+					Data messages are neither stored in the database by
+					scmaster nor processed by modules which only handle
+					notifiers, e.g. scautoloc, scanloc or scevent. They are
+					meant for a module filtering the picks before forwarding
+					them as notifiers, e.g. scpickfilter. Amplitude updates are
+					sent as new objects since data messages have no operation.
+					</description>
+				</parameter>
 			</group>
 			<group name="comment">
 				<description>

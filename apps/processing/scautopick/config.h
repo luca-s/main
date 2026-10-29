@@ -49,6 +49,9 @@ class Config {
 		void init(const System::CommandLine &config);
 
 		std::string amplitudeGroup{"AMPLITUDE"};
+		// Send picks and amplitudes as Core::DataMessage instead of
+		// DataModel::NotifierMessage
+		bool        useDataMessages{false};
 		std::string phaseHint{"P"};
 
 		// allow a comment added to the pick

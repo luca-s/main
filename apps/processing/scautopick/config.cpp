@@ -34,6 +34,9 @@ void Picker::Config::init(const Client::Application *app) {
 	try { amplitudeGroup = app->configGetString("connection.amplitudeGroup"); }
 	catch ( ... ) {}
 
+	try { useDataMessages = app->configGetBool("connection.useDataMessages"); }
+	catch ( ... ) {}
+
 	try { phaseHint = app->configGetString("phaseHint"); }
 	catch ( ... ) {}
 
@@ -144,6 +147,7 @@ void Picker::Config::init(const System::CommandLine &commandline) {
 void Picker::Config::dump() const {
 	printf("Configuration:\n");
 	printf("amplitude group                  %s\n",     amplitudeGroup.c_str());
+	printf("useDataMessages                  %s\n",     useDataMessages ? "true":"false");
 	printf("testMode                         %s\n",     test ? "true":"false");
 	printf("offline                          %s\n",     offline ? "true":"false");
 	printf("useAllStreams                    %s\n",     useAllStreams ? "true":"false");
